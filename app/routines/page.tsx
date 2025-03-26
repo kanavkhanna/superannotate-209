@@ -126,6 +126,7 @@ export default function RoutinesPage() {
   const morningProducts = morningForm.watch("products")
   const eveningProducts = eveningForm.watch("products")
 
+  // Update the onSubmit function to ensure proper date handling
   const onSubmit = async (time: string) => {
     setIsSubmitting(true)
 
@@ -141,7 +142,7 @@ export default function RoutinesPage() {
         // Create routine entry with date and time
         const routineEntry = {
           ...data,
-          date: today,
+          date: today, // Date will be properly serialized by our storage utility
           time: "morning",
         }
 
@@ -158,7 +159,7 @@ export default function RoutinesPage() {
         // Create routine entry with date and time
         const routineEntry = {
           ...data,
-          date: today,
+          date: today, // Date will be properly serialized by our storage utility
           time: "evening",
         }
 

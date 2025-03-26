@@ -39,7 +39,7 @@ interface Concerns {
 
 interface TrackingEntry {
   id: number
-  date: Date
+  date: Date | string
   skinRating: string
   concerns: Concerns
   notes: string
@@ -54,27 +54,21 @@ export default function TrackingPage() {
   const [editingEntry, setEditingEntry] = useState<TrackingEntry | null>(null)
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  // Add state for deleted entry
-  const [deletedEntry, setDeletedEntry] = useState<TrackingEntry | null>(null)
 
   // Load tracking data from localStorage
   useEffect(() => {
     const savedTrackingEntries = storage.getItem("skintracker-tracking", [])
-    // Convert date strings back to Date objects
-    const processedEntries = savedTrackingEntries.map((entry: any) => ({
-      ...entry,
-      date: new Date(entry.date),
-    }))
-    setTrackingEntries(processedEntries)
+    // The storage utility now handles Date objects automatically
+    setTrackingEntries(savedTrackingEntries)
     setIsLoading(false)
   }, [])
 
   // Save tracking data to localStorage whenever it changes
   useEffect(() => {
-    if (trackingEntries.length > 0 || trackingEntries.length === 0) {
-      storage.setItem("skintracker-tracking", trackingEntries)
-    }
-  }, [trackingEntries])
+    if (isLoading || typeof window === "undefined") return
+
+    storage.setItem("skintracker-tracking", trackingEntries)
+  }, [trackingEntries, isLoading])
 
   const form = useForm<z.infer<typeof trackingFormSchema>>({
     resolver: zodResolver(trackingFormSchema),
@@ -158,28 +152,28 @@ export default function TrackingPage() {
           toast.success("Skin condition tracking saved!")
         }
       }
-
-      // Reset form
-      form.reset({
-        date: new Date(),
-        skinRating: "3",
-        concerns: {
-          dryness: false,
-          oiliness: false,
-          acne: false,
-          redness: false,
-          sensitivity: false,
-        },
-        notes: "",
-      })
-
-      // Switch to view tab after saving
-      setActiveTab("view")
     } catch (error) {
       toast.error("Failed to save tracking data. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
+
+    // Reset form
+    form.reset({
+      date: new Date(),
+      skinRating: "3",
+      concerns: {
+        dryness: false,
+        oiliness: false,
+        acne: false,
+        redness: false,
+        sensitivity: false,
+      },
+      notes: "",
+    })
+
+    // Switch to view tab after saving
+    setActiveTab("view")
   }
 
   const getEmojiForRating = (rating: string): string => {
@@ -226,16 +220,13 @@ export default function TrackingPage() {
     setShowDeleteDialog(true)
   }
 
-  // Update the deleteEntry function to use Sonner toast with undo
+  // Improved deleteEntry function with direct undo functionality
   const deleteEntry = () => {
     if (entryToDelete === null) return
 
     // Find the entry to be deleted
     const entryToBeDeleted = trackingEntries.find((entry) => entry.id === entryToDelete)
     if (!entryToBeDeleted) return
-
-    // Store the deleted entry for potential undo
-    setDeletedEntry(entryToBeDeleted)
 
     // Remove the entry from the list
     const updatedEntries = trackingEntries.filter((entry) => entry.id !== entryToDelete)
@@ -248,12 +239,9 @@ export default function TrackingPage() {
       action: {
         label: "Undo",
         onClick: () => {
-          // Restore the deleted entry
-          if (deletedEntry) {
-            setTrackingEntries((prev) => [...prev, deletedEntry])
-            setDeletedEntry(null)
-            toast.success("Entry restored")
-          }
+          // Directly restore the entry
+          setTrackingEntries((prev) => [...prev, entryToBeDeleted])
+          toast.success(`Entry restored`)
         },
       },
     })
@@ -268,9 +256,7 @@ export default function TrackingPage() {
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
     const entry = getEntryForDate(date)
-    if (entry) {
-      // If entry exists for this date, show it
-    } else {
+    if (!entry) {
       toast.info("No tracking data for this date")
     }
   }
@@ -740,7 +726,7 @@ export default function TrackingPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will delete this tracking entry. This action cannot be undone.
+                This will delete this tracking entry. You can undo this action afterward if needed.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -19,7 +19,7 @@ export default function Home() {
           <ThemeToggle />
         </header>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Link href="/routines" className="block group">
             <Card className="h-full overflow-hidden border-muted/40 transition-all duration-300 hover:border-primary/30 hover:shadow-lg">
               <CardHeader>
