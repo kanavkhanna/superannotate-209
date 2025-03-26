@@ -58,8 +58,12 @@ export default function TrackingPage() {
   // Load tracking data from localStorage
   useEffect(() => {
     const savedTrackingEntries = storage.getItem("skintracker-tracking", [])
-    // The storage utility now handles Date objects automatically
-    setTrackingEntries(savedTrackingEntries)
+    // Convert date strings back to Date objects
+    const processedEntries = savedTrackingEntries.map((entry: any) => ({
+      ...entry,
+      date: new Date(entry.date),
+    }))
+    setTrackingEntries(processedEntries)
     setIsLoading(false)
   }, [])
 
@@ -152,28 +156,28 @@ export default function TrackingPage() {
           toast.success("Skin condition tracking saved!")
         }
       }
+
+      // Reset form
+      form.reset({
+        date: new Date(),
+        skinRating: "3",
+        concerns: {
+          dryness: false,
+          oiliness: false,
+          acne: false,
+          redness: false,
+          sensitivity: false,
+        },
+        notes: "",
+      })
+
+      // Switch to view tab after saving
+      setActiveTab("view")
     } catch (error) {
       toast.error("Failed to save tracking data. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
-
-    // Reset form
-    form.reset({
-      date: new Date(),
-      skinRating: "3",
-      concerns: {
-        dryness: false,
-        oiliness: false,
-        acne: false,
-        redness: false,
-        sensitivity: false,
-      },
-      notes: "",
-    })
-
-    // Switch to view tab after saving
-    setActiveTab("view")
   }
 
   const getEmojiForRating = (rating: string): string => {

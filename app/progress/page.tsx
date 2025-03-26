@@ -87,9 +87,22 @@ export default function ProgressPage() {
     const savedRoutines = storage.getItem("skintracker-routines", [])
     const savedProducts = storage.getItem("skintracker-products", [])
 
-    // Our improved storage utility now handles Date objects automatically
-    setTrackingEntries(savedTrackingEntries)
-    setRoutineEntries(savedRoutines || [])
+    // Convert date strings to Date objects
+    const processedEntries = savedTrackingEntries.map((entry: any) => ({
+      ...entry,
+      date: new Date(entry.date),
+    }))
+
+    // Process routine entries to ensure dates are Date objects
+    const processedRoutines = savedRoutines
+      ? savedRoutines.map((routine: any) => ({
+          ...routine,
+          date: routine.date ? new Date(routine.date) : null,
+        }))
+      : []
+
+    setTrackingEntries(processedEntries)
+    setRoutineEntries(processedRoutines)
     setProducts(savedProducts || [])
     setIsLoading(false)
   }, [])
